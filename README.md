@@ -8,7 +8,7 @@ This is a wrapper for some statistics of a bunch of people made with some APIs.
 ### How do I include an API?
 Add a file into the `api` directory. The name of your file will be the URL, without the `.js` extension.
 
-A simple file named `file.js` is avaible under `/file` and can look like this:
+For example: a simple file named `file.js` is accessible under `[http://localhost:8080]/file` and can look like this:
 ``` js
 module.exports = function(req, res, next) {
 	res.send('Hello World!');
@@ -17,10 +17,16 @@ module.exports = function(req, res, next) {
 ```
 
 ### Structure configs
-You can put a few configurations of your API module into the `config`-directory. Would be great if the name of the file is somehow related to the module.
+You can put a few configurations of your API module into the `config` directory. Would be great if the name of the file is somehow related to the module.
 
 ### Securing your API keys
 Open accessible API keys are meh. Put them into a configuration file, censor them (maybe with `xxxx`), add the file to the `.gitignore`, push the whole thing and then insert them again. No one will see them (unless you want to update your config-file).
+
+If git is still tracking the file, you can "untrack" (assume unchanged) it with:
+`git update-index --assume-unchanged path/to/file.js`
+
+To revert this, type the following command:
+`git update-index --no-assume-unchanged path/to/file.js`
 
 ### Stream APIs
 Listen to streams by adding a file into the `api/stream` directory. There's a socket.io server listening, so you can emit news easily.
@@ -59,4 +65,4 @@ The API Keys for Twitter are censored. For testing register your own twitter app
 
 * restify Caching
 * private `POST`/`PUT` methods
-*
+* ...
