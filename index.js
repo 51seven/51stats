@@ -7,7 +7,10 @@ var server = restify.createServer({
     version: '0.0.1'
 });
 
-var io = require('socket.io').listen(server.server);
+if(process.argv[2] !== 'no-socket') {
+    console.log('Socket.io server binded to %s', server.name);
+    var io = require('socket.io').listen(server.server);
+}
 
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
@@ -21,11 +24,15 @@ fs.readdir('api', function(err, files) {
     });
 });
 
-fs.readdir('api/stream', function(err, files) {
-    _.each(files, function(file, index, list) {
-        require('./api/stream/'+file)(io);
+
+if(process.argv[2] !== 'no-socket') {
+    fs.readdir('api/stream', function(err, files) {
+        _.each(files, function(file, index, list) {
+            require('./api/stream/'+file)(io);
+        });
     });
-});
+}
+
 
 // TODO: Caching component (wtf do I need Redis for this?)
 

@@ -5,6 +5,12 @@ This is a wrapper for some statistics of a bunch of people made with some APIs.
 
 ## Getting started
 
+### Start the app
+Navigate to the directory and type `node index` into your command line. In development mode it's nice to use a node module like [nodemon](https://www.npmjs.org/package/nodemon).
+
+#### Arguments
+* `no-socket`: launches the app without socket.io in case if you don't want to have streams listening in the background.
+
 ### How do I include an API?
 Add a file into the `api` directory. The name of your file will be the URL, without the `.js` extension.
 
