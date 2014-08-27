@@ -1,0 +1,27 @@
+{
+  "name": "51stats",
+  "version": "0.0.1",
+  "description": "Stats for 51seven",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/51seven/51stats"
+  },
+  "author": "51seven",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/51seven/51stats/issues"
+  },
+  "homepage": "https://github.com/51seven/51stats",
+  "dependencies": {
+    "restify": "~2.8.2",
+    "async": "~0.9.0",
+    "when": "~3.4.4",
+    "twitter": "~0.2.9",
+    "underscore": "~1.7.0"
+  }
+}
