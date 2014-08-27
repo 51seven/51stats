@@ -1,8 +1,8 @@
 var when 	= require('when'),
 	_ 		= require('underscore'),
 	async 	= require('async'),
-	twitter = require('twitter');
-
+	twitter = require('twitter'),
+	util 	= require('util');
 
 var accounts = require('../config/twitter').users,
 	twitterauth = require('../config/twitter').auth,
@@ -57,14 +57,18 @@ function getTodaysTweetCountOf(name) {
    The Object which will be passed to the res.send is the whole object for your response.
    Think smart, structure it well. */
 module.exports = function(req, res, next) {
+	
 	var result = [];
 
 	// The async.each method will call the last function,
 	// when all callbacks in the loop have been called.
 	async.each(accounts, function(user, callback) {
+
+
 		getTodaysTweetCountOf(user.name)
 		.then(function(number) {
 			result.push({
+				id: user.id,
 				name: user.name,
 				count: number
 			});

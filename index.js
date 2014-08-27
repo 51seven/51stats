@@ -7,13 +7,23 @@ var server = restify.createServer({
 	version: '0.0.1'
 });
 
+var io = require('socket.io').listen(server.server);
+
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
 fs.readdir('api', function(err, files) {
-	_.each(files, function(element, index, list) {
-		server.get('/'+element.replace('.js', ''), require('./api/'+element));
+	_.each(files, function(file, index, list) {
+		if(!fs.lstatSync('api/'+file).isDirectory()) {
+			server.get('/'+file.replace('.js', ''), require('./api/'+file));
+		}
+	});
+});
+
+fs.readdir('api/stream', function(err, files) {
+	_.each(files, function(file, index, list) {
+		require('./api/stream/'+file)(io);
 	});
 });
 
