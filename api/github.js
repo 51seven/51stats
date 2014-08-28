@@ -31,35 +31,54 @@ module.exports = function(req, res, next) {
 		});	
 	}, function() {
 		var filtered_results = [];
-		result = result[0];
-		var login;
 		
-		for (var key in result) {
+		async.each(result[0], function(key, callback) {
 			var now = new Date();
-			var created_at = new Date(result[key].created_at);
+			var created_at = new Date(key.created_at);
+			var obj = {};
+			var userinfo = {};
+			var login;
 
-			if(result[key].hasOwnProperty("actor")) {
-				if(now-created_at < 60*60*24*1000) { // 1 day in ms
-					login = result[key].actor.login;
+			if(key.hasOwnProperty("actor")) {
+				if(now-created_at < 60*60*24*1000) { // 1 day in ms
+					login = key.actor.login;
 
-					// Creating a new author in the results array
-					if(filtered_results[login] === undefined) {
-						filtered_results[login] = {};
-						filtered_results[login].commit_count = 0;
+					if(filtered_results.length > 0) {
+						var found = false;
+
+						for(var key in filtered_results) {
+							if(filtered_results[key].name == login) {
+								filtered_results[key].commit_count ++;
+								found = true;
+							}
+						}
+
+						if(!found) {
+							obj.name = login;
+							obj.commit_count = 1;
+							filtered_results.push(obj);
+						}
 					}
-					
-					filtered_results[login].commit_count++;
+					else {
+						obj.name = login;
+						obj.commit_count = 1;
+						filtered_results.push(obj);
+					}
 				}
-			}
-		}
+			} 
 
-		//console.log(filtered_results);
-		// res.send(results);
+			callback();
 
-		res.send(filtered_results);
+		}, function() {
+			
+			res.send(filtered_results);
+			
+			// Don't forget this:
+			return next();
+		});
 	});
-
-	
-	// Don't forget this:
-	return next();
 };
+
+
+
+
