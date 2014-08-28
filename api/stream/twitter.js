@@ -21,7 +21,7 @@ module.exports = function(io) {
             // We don't need that.
                                 // Also, just make something when the received data is from one of the given users,
                                 // not when somebody mentions them.
-            if(!data.friends && _.indexOf(user_ids, data.user.id) > -1) {
+            if(!data.friends && data.user && _.indexOf(user_ids, data.user.id) > -1) {
                 var send = {
                     type: 'twitter',
                     user: {

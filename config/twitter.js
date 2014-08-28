@@ -15,26 +15,42 @@ exports.auth = {
 exports.users = [
     {
         name: 'verwebbt',
-        id: 54593592
+        id: 54593592,
+        tweets: {
+            start: 8279
+        }
     },
     {
         name: '_chrispop',
-        id: 170442377
+        id: 170442377,
+        tweets: {
+            start: 6004
+        }
     },
     {
         name: 'zvaehn',
-        id: 1081613545
+        id: 1081613545,
+        tweets: {
+            start: 1905
+        }
     },
     {
         name: 'janni_kek',
-        id: 1541530670
+        id: 1541530670,
+        tweets: {
+            start: 94
+        }
     },
     {
         name: 'timotestetdinge',
-        id: 2773066591
+        id: 2773066591,
+        tweets: {
+            start: 27
+        }
     },
 ];
 
 exports.config = {
-    req_tweets: 150
+    req_tweets: 150,
+    since: new Date(2014, 7, 28, 0, 0, 0, 0)
 };

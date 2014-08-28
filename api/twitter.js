@@ -1,8 +1,9 @@
-var when    = require('when'),
-    _       = require('underscore'),
-    async   = require('async'),
-    twitter = require('twitter'),
-    util    = require('util');
+var when      = require('when'),
+    _         = require('underscore'),
+    async     = require('async'),
+    twitter   = require('twitter'),
+    util      = require('util'),
+    path      = require('path');
 
 var accounts = require('../config/twitter').users,
     twitterauth = require('../config/twitter').auth,
@@ -25,7 +26,7 @@ function getTodaysTweetCountOf(name) {
     // Will be added to the twit.get as GET parameters.
     var params = {
         screen_name: name,
-        trim_user: 1,
+        //trim_user: 1,
         count: config.req_tweets
     };
 
@@ -34,7 +35,7 @@ function getTodaysTweetCountOf(name) {
     // when resolve() is triggered.
     return when.promise(function(resolve, reject, notify) {
         twit.get('/statuses/user_timeline.json', params, function(data) {
-            var date;
+            var date, result;
 
             _.each(data, function(tweet) {
                 date = new Date(tweet.created_at);
@@ -44,7 +45,17 @@ function getTodaysTweetCountOf(name) {
                 }
             });
 
-            resolve(count);
+            result = {
+                count: count,
+                image: data[0].user.profile_image_url,
+                userid: data[0].user.id,
+                name: data[0].user.screen_name,
+                last_tweet: data[0].text,
+                total_tweets: data[0].user.statuses_count,
+                register_date: data[0].user.created_at
+            };
+
+            resolve(result);
         });
     });
 }
@@ -63,21 +74,55 @@ module.exports = function(req, res, next) {
     // The async.each method will call the last function,
     // when all callbacks in the loop have been called.
     async.each(accounts, function(user, callback) {
-
+        var now = new Date();
 
         getTodaysTweetCountOf(user.name)
-        .then(function(number) {
-            result.push({
-                id: user.id,
-                name: user.name,
-                count: number
-            });
+        .then(function(data) {
+            var since_date = config.since,
+                registered = new Date(data.register_date),
+                total_tweets = data.total_tweets,
+                timeDiffComplete = Math.abs(now.getTime() - registered.getTime()),
+                daysDiffComplete = Math.ceil(timeDiffComplete / (1000 * 3600 * 24)),
+                timeDiffStats = Math.abs(now.getTime() - since_date.getTime()),
+                daysDiffStats = Math.ceil(timeDiffStats / (1000 * 3600 * 24)),
+                tweetDiff = total_tweets - user.tweets.start;
+                
+            return {
+                user: {
+                    id: data.userid,
+                    name: data.name,
+                    img_small: data.image,
+                    img_large: data.image.replace('_normal', '')
+                },
+                tweets: {
+                    count: data.count,
+                    last: data.last_tweet,
+                    total: data.total_tweets,
+                    subtotal: tweetDiff,
+                    average_complete: {
+                        days: daysDiffComplete,
+                        value: total_tweets/daysDiffComplete
+                    },
+                    average_stats: {
+                        days: daysDiffStats,
+                        value: tweetDiff/daysDiffStats
+                    }
+                }
+            }
+        })    
+        .then(function(data) {
+            result.push(data);
             callback();
+        })
+        .catch(function(err) {
+            res.send(err);
+            //return next();
         });
     }, function(err) {
+        res.charSet('utf-8');
         // Send the response with a object sorted by the name property
         res.send(_.sortBy(result, function(obj) {
-            return obj.name
+            return obj.user.name
         }));
 
         // Don't forget this:
