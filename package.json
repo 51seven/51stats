@@ -23,6 +23,7 @@
     "when": "~3.4.4",
     "twitter": "~0.2.9",
     "underscore": "~1.7.0",
-    "socket.io": "~1.0.6"
+    "socket.io": "~1.0.6",
+    "nedb": "~0.11.0"
   }
 }
