@@ -7,6 +7,9 @@ var server = restify.createServer({
     version: '0.0.1'
 });
 
+// Global variables as helpers
+__root = __dirname;
+
 if(process.argv[2] !== 'no-socket') {
     console.log('Socket.io server binded to %s', server.name);
     var io = require('socket.io').listen(server.server);
@@ -18,7 +21,7 @@ server.use(restify.bodyParser());
 
 fs.readdir('api', function(err, files) {
     _.each(files, function(file, index, list) {
-        if(!fs.lstatSync('api/'+file).isDirectory()) {
+        if(!fs.lstatSync('api/'+file).isDirectory() || file[0] === '.') {
             server.get('/'+file.replace('.js', ''), require('./api/'+file));
         }
     });
