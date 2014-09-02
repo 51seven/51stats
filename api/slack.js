@@ -69,13 +69,25 @@ function getMessagesWrittenToday(channelIds) {
    Alters the accounts.messages value. */
 function getMessagesPerUserPerDay(messagesToday) {
     async.each(accounts, function(data, callback) {
-        var messagesCount = 0;
+        var messagesCount = 0,
+            charCount     = 0,
+            videoCount    = 0;
         _.each(messagesToday, function(messages) {
             if (messages.user === data.id){
                 messagesCount++;
+                var chars = messages.text.length;
+                charCount += chars;
+
+                if(messages.attachments) {
+                    if(messages.attachments[0].service_name === 'YouTube') {
+                        videoCount++;
+                    }
+                }
             }
         });
         data.messages = messagesCount;
+        data.chars = charCount;
+        data.videos = videoCount;
         console.log(data.name + ': ' + data.messages);
         callback();
     }, function() {
