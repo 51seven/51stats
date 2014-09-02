@@ -12,25 +12,29 @@ exports.users = [
         name: 'chris',
         id: 'U025N59H1',
         messages: 0,
-        chars: 0
+        chars: 0,
+        videos: 0
     },
     {
         name: 'janni',
         id: 'U0296S65B',
         messages: 0,
-        chars: 0
+        chars: 0,
+        videos: 0
     },
     {
         name: 'sven',
         id: 'U025KPRJP',
         messages: 0,
-        chars: 0
+        chars: 0,
+        videos: 0
     },
     {
         name: 'timo',
         id: 'U0297K3F0',
         messages: 0,
-        chars: 0
+        chars: 0,
+        videos: 0
     }
 ];
 
