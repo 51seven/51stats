@@ -1,4 +1,4 @@
-exports.token = 'xoxp-2189807633-2192179579-2604845018-87b253';
+exports.token = 'xxxx';
 
 /*exports.auth = {
     consumer_key: keys.api_key,
