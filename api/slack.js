@@ -68,30 +68,76 @@ function getMessagesWrittenToday(channelIds) {
 /* Checks which messages was send by which user.
    Alters the accounts.messages value. */
 function getMessagesPerUserPerDay(messagesToday) {
-    async.each(accounts, function(data, callback) {
+    async.each(accounts, function(accountsData, callback) {
+        
+        // Some variables to count with
         var messagesCount = 0,
             charCount     = 0,
+            linkCount     = 0,
             videoCount    = 0;
+
         _.each(messagesToday, function(messages) {
-            if (messages.user === data.id){
+            
+            // Count messages and chars
+            if (messages.user === accountsData.id){
                 messagesCount++;
                 var chars = messages.text.length;
+
+                // Check if the message contains one or more links.
+                if(messages.text.match(/<http(.*?)>/g)) {
+                    // Get AAAAALLL the links
+                    var links       = messages.text.match(/<http(.*?)>/g),
+                        linksLength = 0;
+
+                    // Check if there is more than one Link in a message
+                    if(links.length > 1) {
+                        // Keep track of how many links were sent
+                        linkCount += links.length;
+
+                        // If so, add the Langth up for the links
+                        _.each(links, function(singleLink) {
+                            linksLength += String(singleLink).length; 
+                            console.log(singleLink);
+                        }); 
+                        chars -= linksLength;
+                    }
+                    else {
+                        linkCount++;
+                        linksLength = String(links[0]).length;
+                        chars -= linksLength;
+                    }
+                }
                 charCount += chars;
 
+                // Count YouTube attachments
                 if(messages.attachments) {
+                    // Only checks for YT. Possibility to chak for other services in the future.
                     if(messages.attachments[0].service_name === 'YouTube') {
                         videoCount++;
                     }
                 }
+
+                // Emoji-thingy, still dev
+                var text = messages.text;
+                var emojis = text.match(/:([\w]+?):/g);
+                if(emojis) {
+                    console.log(emojis)
+                }
             }
         });
-        data.messages = messagesCount;
-        data.chars = charCount;
-        data.videos = videoCount;
-        console.log(data.name + ': ' + data.messages);
+
+        // Write the counts in the returned object
+        accountsData.messages = messagesCount;
+        accountsData.chars = charCount;
+        accountsData.charsPerMessage = parseInt(charCount/messagesCount);
+        accountsData.links = linkCount;
+        accountsData.videos = videoCount;
+        console.log(accountsData.name + ': ' + accountsData.messages); // DEBUG
         callback();
     }, function() {
+        // Nothing to do here, but I think async needs this work properly.
     });
+
 };
 
 

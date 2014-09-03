@@ -1,4 +1,4 @@
-exports.token = 'xxxx';
+exports.token = 'xoxp-2189807633-2192179579-2604845018-87b253';
 
 /*exports.auth = {
     consumer_key: keys.api_key,
@@ -13,6 +13,8 @@ exports.users = [
         id: 'U025N59H1',
         messages: 0,
         chars: 0,
+        charsPerMessage: 0,
+        links: 0,
         videos: 0
     },
     {
@@ -20,6 +22,8 @@ exports.users = [
         id: 'U0296S65B',
         messages: 0,
         chars: 0,
+        charsPerMessage: 0,
+        links: 0,
         videos: 0
     },
     {
@@ -27,6 +31,8 @@ exports.users = [
         id: 'U025KPRJP',
         messages: 0,
         chars: 0,
+        charsPerMessage: 0,
+        links: 0,
         videos: 0
     },
     {
@@ -34,7 +40,10 @@ exports.users = [
         id: 'U0297K3F0',
         messages: 0,
         chars: 0,
+        charsPerMessage: 0,
+        links: 0,
         videos: 0
+
     }
 ];
 
