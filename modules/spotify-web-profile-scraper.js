@@ -29,9 +29,11 @@ module.exports = function(userid) {
                     track_ids = [],
                     name, profile_pic;
 
-                if(body.indexOf('<h3>Top Tracks') > -1) {
-                    $('li.single-track').each(function(i, elem) {
-                        track_ids[i] = $(this).attr('data-id');
+                if(body.indexOf('<div>Top Tracks') > -1) {
+                    $('tr.tl-row').each(function(i, elem) {
+                        var uri = $(this).attr('data-uri');
+                        var uria = uri.split(':');
+                        track_ids[i] = uria[uria.length - 1];
                     });
                 }
 

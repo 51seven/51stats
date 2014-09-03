@@ -1,6 +1,10 @@
 # Configs
 config/twitter.js
 
+# Memory
+memory/facebook.db
+memory/spotify.db
+
 
 
 ##############

@@ -3,7 +3,7 @@ var graph = require('fbgraph')
   , Datastore = require('nedb')
   , readline = require('readline');
 
-db = new Datastore({ filename: '../memory/facebook.db', autoload: true });
+var db = new Datastore({ filename: '../memory/facebook.db', autoload: true });
 
 var rl = readline.createInterface({
   input: process.stdin,
