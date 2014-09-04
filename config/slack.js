@@ -15,7 +15,9 @@ exports.users = [
         chars: 0,
         charsPerMessage: 0,
         links: 0,
-        videos: 0
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
     },
     {
         name: 'janni',
@@ -24,7 +26,9 @@ exports.users = [
         chars: 0,
         charsPerMessage: 0,
         links: 0,
-        videos: 0
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
     },
     {
         name: 'sven',
@@ -33,7 +37,9 @@ exports.users = [
         chars: 0,
         charsPerMessage: 0,
         links: 0,
-        videos: 0
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
     },
     {
         name: 'timo',
@@ -42,7 +48,9 @@ exports.users = [
         chars: 0,
         charsPerMessage: 0,
         links: 0,
-        videos: 0
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
 
     }
 ];
