@@ -5,8 +5,7 @@ var _         = require('underscore'),
 var accounts     = require('../config/slack').users,
     token        = require('../config/slack').token,
     Slack        = require('slack-node'),
-    customEmojis = [],
-    returnData   = [];
+    customEmojis = [];
 
 // Authorize the app
 var slack = new Slack(token);
@@ -86,24 +85,31 @@ function getCustomEmojis() {
     });
 };
 
+/* Returns the favorite (speak: most frequently used) emoji of a user. */
 function getFavoriteEmoji(emojisUsed) {
     return when.promise(function(resolve, reject, notify) {
         var emojiFrequency = {},
             maxValue = 0,
             maxKey   = null;
 
+        // Remove the custom emojis from the list.
+        // Not everyone outside needs to see them.
         var cleanEmojis = _.difference(emojisUsed,customEmojis);
 
+        // Check if the given emoji has already bee noted in the emojiFrequency Object.
         _.each(cleanEmojis, function(emoji) {
+            // If so, just increase the count by one.
             if(emoji in emojiFrequency) {
                 var oldFreq = emojiFrequency[emoji];
                 emojiFrequency[emoji] = ++oldFreq;
             }
+            // Else, make an entry in the object for the emoji
             else {
                 emojiFrequency[emoji] = 1;
             }
         }); 
 
+        // Find the most frequently used emoji in emojiFrequency
         for(key in emojiFrequency) {
             if(emojiFrequency[key] > maxValue) {
                 maxValue = emojiFrequency[key];
@@ -119,95 +125,97 @@ function getFavoriteEmoji(emojisUsed) {
    Alters the accounts.messages value. */
 function getMessagesPerUserPerDay(messagesToday) {
     return when.promise(function(resolve, reject, notify) {
-    async.each(accounts, function(accountsData, callback) {
-        
-        // Some variables to count with
-        var messagesCount = 0,
-            charCount     = 0,
-            linkCount     = 0,
-            videoCount    = 0,
-            emojiCount    = 0,
-            emojisUsed    = [],
-            favoriteEmoji = null;
-
-        _.each(messagesToday, function(messages) {
+        async.each(accounts, function(accountsData, callback) {
             
-            // Count messages and chars
-            if (messages.user === accountsData.id){
-                messagesCount++;
-                var chars = messages.text.length;
-
-                // Check if the message contains one or more links.
-                if(messages.text.match(/<http(.*?)>/g)) {
-                    // Get AAAAALLL the links
-                    var links       = messages.text.match(/<http(.*?)>/g),
-                        linksLength = 0;
-
-                    // Check if there is more than one Link in a message
-                    if(links.length > 1) {
-                        // Keep track of how many links were sent
-                        linkCount += links.length;
-
-                        // If so, add the Langth up for the links
-                        _.each(links, function(singleLink) {
-                            linksLength += String(singleLink).length; 
-                            console.log(singleLink);
-                        }); 
-                        chars -= linksLength;
-                    }
-                    else {
-                        linkCount++;
-                        linksLength = String(links[0]).length;
-                        chars -= linksLength;
-                    }
-                }
-                charCount += chars;
-
-                // Count YouTube attachments
-                if(messages.attachments) {
-                    // Only checks for YT. Possibility to check for other services in the future.
-                    if(messages.attachments[0].service_name === 'YouTube') {
-                        videoCount++;
-                    }
-                }
-
-                // Emoji-thingy, still dev
-                if(messages.text.match(/:([\w]+?):/g)) {
-                    emojisUsed.push((String(messages.text.match(/:([\w]+?):/g)).replace(/:/g, '')));
-                    emojiCount++;
-                }
-
+            // Some variables to count with
+            var messagesCount = 0,
+                charCount     = 0,
+                linkCount     = 0,
+                videoCount    = 0,
+                emojiCount    = 0,
+                emojisUsed    = [],
+                favoriteEmoji = null;
+    
+            _.each(messagesToday, function(messages) {
                 
-
-            }
+                // Count messages and chars
+                if (messages.user === accountsData.id){
+                    messagesCount++;
+                    var chars = messages.text.length;
+    
+                    // Check if the message contains one or more links.
+                    if(messages.text.match(/<http(.*?)>/g)) {
+                        // Get AAAAALLL the links
+                        var links       = messages.text.match(/<http(.*?)>/g),
+                            linksLength = 0;
+    
+                        // Check if there is more than one Link in a message
+                        if(links.length > 1) {
+                            // Keep track of how many links were sent
+                            linkCount += links.length;
+    
+                            // If so, add the Langth up for the links
+                            _.each(links, function(singleLink) {
+                                linksLength += String(singleLink).length; 
+                                console.log(singleLink);
+                            }); 
+                            chars -= linksLength;
+                        }
+                        else {
+                            linkCount++;
+                            linksLength = String(links[0]).length;
+                            chars -= linksLength;
+                        }
+                    }
+                    charCount += chars;
+    
+                    // Count YouTube attachments
+                    if(messages.attachments) {
+                        // Only checks for YT. Possibility to check for other services in the future.
+                        if(messages.attachments[0].service_name === 'YouTube') {
+                            videoCount++;
+                        }
+                    }
+    
+                    // Emoji-thingy, still dev
+                    if(messages.text.match(/:([\w]+?):/g)) {
+                        emojisUsed.push((String(messages.text.match(/:([\w]+?):/g)).replace(/:/g, '')));
+                        emojiCount++;
+                    }
+    
+                    
+    
+                }
+            });
+    
+            getFavoriteEmoji(emojisUsed).then(function(data) {
+                            favoriteEmoji = data;
+                            console.log(favoriteEmoji); // DEBUG
+                            accountsData.favoriteEmoji   = favoriteEmoji;
+                            // Write the counts in the returned object
+                            accountsData.messages        = messagesCount;
+                            accountsData.chars           = charCount;
+                            accountsData.charsPerMessage = parseInt(charCount/messagesCount);
+                            accountsData.links           = linkCount;
+                            accountsData.videos          = videoCount;
+                            accountsData.emojisUsed      = emojiCount;
+    
+                                                  
+                    
+                            //console.log(accountsData.name + ': ' + accountsData.messages); // DEBUG
+                            //console.log('All emojis used: ' + emojisUsed); // DEBUG
+                    
+                            callback();
+            });
+    
+            
+            }, function() {
+                // This is a little tricky.
+                // The resolve in here makes sure, that all users from config/slack.js have been treated before it
+                // hands over the accounts to the res.send()
+                resolve(accounts);
         });
-
-        getFavoriteEmoji(emojisUsed).then(function(data) {
-                        favoriteEmoji = data;
-                        console.log(favoriteEmoji); // DEBUG
-                        accountsData.favoriteEmoji   = favoriteEmoji;
-                        // Write the counts in the returned object
-                        accountsData.messages        = messagesCount;
-                        accountsData.chars           = charCount;
-                        accountsData.charsPerMessage = parseInt(charCount/messagesCount);
-                        accountsData.links           = linkCount;
-                        accountsData.videos          = videoCount;
-                        accountsData.emojisUsed      = emojiCount;
-
-                                              
-                
-                        //console.log(accountsData.name + ': ' + accountsData.messages); // DEBUG
-                        //console.log('All emojis used: ' + emojisUsed); // DEBUG
-                
-                        callback();
-        });
-
-        
-    }, function() {
-        // Nothing to do here, but I think async needs this work properly.
-        resolve(accounts);
-    });
-})
+    })
 
 };
 
@@ -223,19 +231,26 @@ function getMessagesPerUserPerDay(messagesToday) {
    Think smart, structure it well. */
 module.exports = function(req, res, next) {
 
+    // Has to be called before the main function because it makes an API-Call
     getCustomEmojis().then(function(data) {
-                    customEmojis = data;
-                    console.log(data); // DEBUG
-                });
+        customEmojis = data;
+    });
 
+    // This is the main part.
+    // Gets all channels first
     getChannelIds().then(function(data) {
+        // Then, from these channels, gets all the messages
         getMessagesWrittenToday(data).then(function(data) {
+            // Then, from the messages, gets all the required data
             getMessagesPerUserPerDay(data).then(function(data) {
+                // Finally send out the result
                 res.send(data);  
             })
             
         });
     });
+
+    // I have no idea what this is, but Timo will seriously hurt me if I delete it. Please help me!
     return next();
 
 };
