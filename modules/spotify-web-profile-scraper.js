@@ -27,7 +27,7 @@ module.exports = function(userid) {
             .then(function(body) {
                 var $ = cheerio.load(body),
                     track_ids = [],
-                    name, profile_pic;
+                    name;
 
                 if(body.indexOf('<div>Top Tracks') > -1) {
                     $('tr.tl-row').each(function(i, elem) {
@@ -38,11 +38,9 @@ module.exports = function(userid) {
                 }
 
                 name = $('meta[property="og:title"]').attr('content');
-                profile_pic = $('#big-cover').attr('src');
 
                 return {
                     name: name,
-                    img: profile_pic,
                     top_tracks: track_ids
                 };
 

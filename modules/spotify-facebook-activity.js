@@ -51,7 +51,9 @@ function checkMusicForToday(data) {
 
 function getTodayMusic() {
   return when.promise(function(resolve, reject) {
+    var result = {};
     getMusic("me/music.listens?limit=125").then(function(res) {
+      result.last = res.data[0];
       return checkMusicForToday(res.data);
     }).then(function(obj) {
       if(obj.count === 125) {
@@ -59,11 +61,15 @@ function getTodayMusic() {
           checkMusicForToday(res.data).then(function(obj2) {
             obj.count += obj2.count;
             obj.duration += obj2.duration;
-            resolve(obj);
+            result.count = obj.count;
+            result.duration = obj.duration;
+            resolve(result);
           })
         });
       } else {
-        resolve(obj);
+        result.count = obj.count;
+        result.duration = obj.duration;
+        resolve(result);
       }
     });
   });
