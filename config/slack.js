@@ -13,28 +13,45 @@ exports.users = [
         id: 'U025N59H1',
         messages: 0,
         chars: 0,
-        videos: 0
+        charsPerMessage: 0,
+        links: 0,
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
     },
     {
         name: 'janni',
         id: 'U0296S65B',
         messages: 0,
         chars: 0,
-        videos: 0
+        charsPerMessage: 0,
+        links: 0,
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
     },
     {
         name: 'sven',
         id: 'U025KPRJP',
         messages: 0,
         chars: 0,
-        videos: 0
+        charsPerMessage: 0,
+        links: 0,
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
     },
     {
         name: 'timo',
         id: 'U0297K3F0',
         messages: 0,
         chars: 0,
-        videos: 0
+        charsPerMessage: 0,
+        links: 0,
+        videos: 0,
+        emojisUsed: 0,
+        favoriteEmoji: null
+
     }
 ];
 
