@@ -301,9 +301,35 @@ module.exports = function(req, res, next) {
       // Next: get count and duration of tracks user listened to today
       return facebookMusic(user.fbid);
     }).then(function(listened_to) {
+      var now = new Date();
       user_obj.stats.today.listening_count = listened_to.count;
       user_obj.stats.today.listening_duration = listened_to.duration;
-      return;
+
+      // object 'last' contains informations about the last played song
+      // if start_time and end_time (returned from facebook api) is between
+      // now (+45 seconds to catch up mostly all publish delays), it will show
+      // that the user is currently hearing a song
+      var start_time = new Date(listened_to.last.start_time);
+      var end_time = new Date(listened_to.last.end_time);
+      end_time.setSeconds(end_time.getSeconds() + 45);
+
+      if(now > start_time && now < end_time) {
+        console.log('user listens');
+        var track = listened_to.last.data.song.url.split('/');
+        var track_id = track[track.length - 1];
+        return spotify.getTrack(track_id);
+      }
+      else {
+        return null;
+      }
+    }).then(function(track_result) {
+      if(track_result === null) return;
+      else {
+        delete track_result.available_markets;
+        delete track_result.album.available_markets;
+        user_obj.listening_to = track_result;
+        return;
+      }
     }).then(function() {
 
       //
