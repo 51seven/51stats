@@ -8,15 +8,18 @@ var when          = require('when')
 
 var db = new Datastore({ filename: './memory/spotify.db', autoload: true });
 
-var auth = require('../config/spotify').auth,
-    users = require('../config/spotify').users,
-    scopes = require('../config/spotify').scopes;
+var auth = require('../config/spotify').auth
+  , users = require('../config/spotify').users
+  , scopes = require('../config/spotify').scopes;
 
 var spotify = new SpotifyWebApi(auth);
-//console.log(spotify.createAuthorizeURL(scopes, 'i-have-no-idea-what-i-am-doing-lol'));
 
-// This script should run somewhen before midnight for
-// best stat quality
+// Uncomment next line for echoing Authorize URL
+// console.log(spotify.createAuthorizeURL(scopes, 'i-have-no-idea-what-i-am-doing-lol'));
+
+
+// This script should run at leastsomewhen before midnight
+// for best stat quality
 
 
 // Main program structure should be something like this
@@ -27,9 +30,7 @@ var spotify = new SpotifyWebApi(auth);
 // #3: Check if today from doc is really today
 //     ->  no: set today to yesterday
 //     -> yes: go on
-// #4: Check if todays data has changed
-//     -> yes: update todays data
-//     ->  no: go on
+// #4: Update today's data
 // #5: Get refreshed data
 //     to avoid a db.findOne() one does simply
 //     carry the doc from #1 around and change it
@@ -96,6 +97,16 @@ function saveCredentaislOfUser(userid, refreshToken) {
   });
 }
 
+/**
+ * Updates the stats->yesterday object to a new given object
+ * 
+ * @param  {Integer} userid Users Spotify ID
+ * @param  {Object} oldtoday Updated object
+ *
+ * @fulfill {empty}
+ * @reject {DatabaseError} Connection error
+ * @returns {Promise}
+ */
 function changeTodayToYesterday(userid, oldtoday) {
   return when.promise(function(resolve, reject) {
     db.update(
@@ -110,6 +121,16 @@ function changeTodayToYesterday(userid, oldtoday) {
   });
 }
 
+/**
+ * Updates the stats->today object to a new given object
+ * 
+ * @param  {Integer} userid Users Spotify ID
+ * @param  {Object} newtoday Updated object
+ *
+ * @fulfill {empty}
+ * @reject {DatabaseError} Connection error
+ * @returns {Promise}
+ */
 function setToday(userid, newtoday) {
   return when.promise(function(resolve, reject) {
     db.update(
@@ -142,6 +163,13 @@ function multipleTracksData(track_ids) {
   });
 }
 
+/**
+ * Refresh and set access_token
+ *
+ * @fulfill {null}
+ * 
+ * @returns {Promise}
+ */
 function newAccessToken() {
   return when.promise(function(resolve, reject) {
     spotify.refreshAccessToken().then(function(token_data) {
@@ -152,6 +180,15 @@ function newAccessToken() {
   });
 }
 
+/**
+ * Auth user with code grant, sets access_token and refresh_token,
+ * saved refresh_token in database
+ * 
+ * @param  {Integer} userid Users Spotify ID
+ * @param {String} user_code code grant from user.config
+ *
+ * @return {Promise}
+ */
 function AuthUserAndSave(userid, user_code) {
   return spotify.authorizationCodeGrant(user_code).then(function(code) {
     spotify.setAccessToken(code['access_token']);
@@ -164,11 +201,15 @@ function AuthUserAndSave(userid, user_code) {
 
 
 module.exports = function(req, res, next) {
+  // This array will be filled in the following async.each with the response for every user
+  // and then send to the response
   var result = [];
 
+  // Loop each user from config through whole API fetch / DB update process
   async.each(users, function(user, callback) {
-    var user_obj = {};
-    var user_doc;
+    var user_obj = {}; // The pushed object to result
+    var user_doc; // The user doc from database
+                  // (will be modified in this process to safe a last db request)
 
     getUserFromDB(user.id).then(function(doc) {
       if(doc !== null) { // This user has already data in the database
@@ -194,6 +235,8 @@ module.exports = function(req, res, next) {
       if(doc) user_doc = _.clone(doc);
       return;
     }).then(function() {
+
+      //
       // AT THIS POINT A USER WILL BE AUTHORIZED AND WILL HAVE A REFRESH_TOKEN IN HIS DOC.
       // API CALLS BEGIN HERE
       //
@@ -204,15 +247,20 @@ module.exports = function(req, res, next) {
       user_obj.user = {};
       user_obj.user.name = scrape_data.name;
 
+      // TODO: missing user keys
+
       var top_tracks = scrape_data.top_tracks;
       // Only first 3 Elements are interesting
       var first_tracks = top_tracks.slice(0, 3);
       return multipleTracksData(first_tracks);
     }).then(function(top_tracks_data) {
       // Add top_position key to Spotify Object
+      // TODO: This does not work
       _.each(top_tracks_data, function(it, i) {
         it.top_position = i+1;
       });
+
+      // TODO: Thin out spotify response object (eg. available_markets array)
 
       user_obj.top_tracks = top_tracks_data;
 
@@ -254,8 +302,11 @@ module.exports = function(req, res, next) {
       user_obj.stats[0].listening_duration = listened_to.duration;
       return;
     }).then(function() {
+
+      //
       // AT THIS POINT WE HAVE COLLECTED ALL THE STATS FROM TODAY.
       // NOW WE NEED TO CHECK IF 'TODAY' IN DATABASE IS REALLY TODAY
+      // 
       
       if(!user_doc.stats) {
         return;
@@ -272,25 +323,25 @@ module.exports = function(req, res, next) {
         });
       }
     }).then(function() {
+      //
       // AT THIS POINT WE HAVE THE CORRECT 'yesterday' IN THE DB.
       // WE CAN UPDATE 'today' NOW
+      // 
       return setToday(user.id, user_obj.stats[0]);
     }).then(function() {
+      //
       // AT THIS POINT WE HAVE THE CORRECT 'today' IN THE DB.
       // WE CAN RETURN THIS
+      // 
 
-
-      console.log(user_obj);
       result.push(user_obj);
       callback();
     })
     .catch(function(err) {
-        // Callback, meh.
+        // async's callback flavoured with an error
         callback(err);
     });
-  }, function(err) {
-    // HERES THE CALLBACK OF THE ASYNC CALLED SEVERAL TIMES ABOVE
-    // YO
+  }, function(err) { // CALLBACK OF ASYNC.EACH
     if(err) {
       db.persistence.compactDatafile();
       return next(err);

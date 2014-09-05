@@ -21,7 +21,7 @@ server.use(restify.bodyParser());
 
 fs.readdir('api', function(err, files) {
     _.each(files, function(file, index, list) {
-        if(!fs.lstatSync('api/'+file).isDirectory() || file[0] === '.') {
+        if(!(fs.lstatSync('api/'+file).isDirectory() || file[0] === '.')) {
             server.get('/'+file.replace('.js', ''), require('./api/'+file));
         }
     });
