@@ -316,12 +316,10 @@ module.exports = function(req, res, next) {
       }
 
       if(user_doc.stats.today && (user_doc.stats.today.date - user_obj.stats.today.date) === 0) {
-        console.log('Docs today date did not change');
         // Doc's 'today' have the same date as today
         return;
       }
       else {
-        console.log('Today is not today anymore. Need to change this.');
         // We need to archive 'today' and set it as 'yesterday'
         return changeTodayToYesterday(user.id, user_doc.stats.today).then(function() {
           user_obj.stats.yesterday = user_doc.stats.today;
