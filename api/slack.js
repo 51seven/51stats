@@ -39,7 +39,6 @@ function getMessagesWrittenToday(channelIds) {
         var messagesToday = [];
 
         async.each(channelIds, function(data, callback) {
-                console.log(data);
                 slack.api("channels.history",{channel: data.toString()}, function(err, data) {
                     if(err) {
                         console.log(err);
@@ -92,12 +91,16 @@ function getFavoriteEmoji(emojisUsed) {
             maxValue = 0,
             maxKey   = null;
 
+
+        //console.log(typeof emojisUsed);
         // Remove the custom emojis from the list.
         // Not everyone outside needs to see them.
         var cleanEmojis = _.difference(emojisUsed,customEmojis);
 
         // Check if the given emoji has already bee noted in the emojiFrequency Object.
         _.each(cleanEmojis, function(emoji) {
+
+            //console.log('Current emoji checked: ' + emoji);
             // If so, just increase the count by one.
             if(emoji in emojiFrequency) {
                 var oldFreq = emojiFrequency[emoji];
@@ -116,7 +119,6 @@ function getFavoriteEmoji(emojisUsed) {
                 maxKey = key;
             }
         }
-        
         resolve(maxKey);
     });
 };
@@ -157,7 +159,6 @@ function getMessagesPerUserPerDay(messagesToday) {
                             // If so, add the Langth up for the links
                             _.each(links, function(singleLink) {
                                 linksLength += String(singleLink).length; 
-                                console.log(singleLink);
                             }); 
                             chars -= linksLength;
                         }
@@ -179,31 +180,32 @@ function getMessagesPerUserPerDay(messagesToday) {
     
                     // Emoji-thingy, still dev
                     if(messages.text.match(/:([\w]+?):/g)) {
-                        emojisUsed.push((String(messages.text.match(/:([\w]+?):/g)).replace(/:/g, '')));
+                        var tempEmojis = messages.text.match(/:([\w]+?):/g);
+                        var plainEmojis = _.map(tempEmojis, function(emoji) {
+                            return emoji.replace(/:/g, '');
+                        });
+                        _.each(plainEmojis, function(emoji) {
+                            emojisUsed.push(emoji);
+                        });
+                        
                         emojiCount++;
                     }
-    
                     
-    
                 }
             });
     
+
             getFavoriteEmoji(emojisUsed).then(function(data) {
                             favoriteEmoji = data;
-                            console.log(favoriteEmoji); // DEBUG
-                            accountsData.favoriteEmoji   = favoriteEmoji;
+
                             // Write the counts in the returned object
+                            accountsData.favoriteEmoji   = favoriteEmoji;
                             accountsData.messages        = messagesCount;
                             accountsData.chars           = charCount;
                             accountsData.charsPerMessage = parseInt(charCount/messagesCount);
                             accountsData.links           = linkCount;
                             accountsData.videos          = videoCount;
                             accountsData.emojisUsed      = emojiCount;
-    
-                                                  
-                    
-                            //console.log(accountsData.name + ': ' + accountsData.messages); // DEBUG
-                            //console.log('All emojis used: ' + emojisUsed); // DEBUG
                     
                             callback();
             });
