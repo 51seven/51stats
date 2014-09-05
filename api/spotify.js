@@ -49,7 +49,6 @@ var spotify = new SpotifyWebApi(auth);
 //     ]
 //   stats
 //     [
-//       date_type (-> 'yesterday' / 'today')
 //       date
 //       playlist_count
 //       playlist_track_count
@@ -111,7 +110,7 @@ function changeTodayToYesterday(userid, oldtoday) {
   return when.promise(function(resolve, reject) {
     db.update(
       { user: userid },
-      { $set: { 'stats[1]': oldtoday } },
+      { $set: { 'stats.yesterday': oldtoday } },
       { upsert: true },
       function(err) {
         if(err) reject(err);
@@ -135,8 +134,8 @@ function setToday(userid, newtoday) {
   return when.promise(function(resolve, reject) {
     db.update(
       { user: userid },
-      { $set: { 'stats[0]': newtoday } },
-      { },
+      { $set: { 'stats.today': newtoday } },
+      { upsert: true },
       function(err) {
         if(err) reject(err);
         else resolve();
@@ -250,19 +249,24 @@ module.exports = function(req, res, next) {
       // TODO: missing user keys
 
       var top_tracks = scrape_data.top_tracks;
+      if(top_tracks.length === 0) return null;
+
       // Only first 3 Elements are interesting
       var first_tracks = top_tracks.slice(0, 3);
       return multipleTracksData(first_tracks);
     }).then(function(top_tracks_data) {
       // Add top_position key to Spotify Object
-      // TODO: This does not work
-      _.each(top_tracks_data, function(it, i) {
-        it.top_position = i+1;
-      });
+      if(top_tracks_data !== null) {
+        // TODO: This does not work
+        _.each(top_tracks_data.tracks, function(it, i) {
+          delete it.available_markets;
+          delete it.album.available_markets;
+          return it;
+        });
 
-      // TODO: Thin out spotify response object (eg. available_markets array)
-
-      user_obj.top_tracks = top_tracks_data;
+        // TODO: Thin out spotify response object (eg. available_markets array)
+        user_obj.top_tracks = top_tracks_data.tracks;
+      }
 
       // Next: get user Playlists
       return spotify.getUserPlaylists(user.id);
@@ -270,10 +274,9 @@ module.exports = function(req, res, next) {
       var today = new Date();
       today.setHours(0,0,0,0);
 
-      user_obj.stats = [];
-      user_obj.stats[0] = {};
-      user_obj.stats[0].date_type = 'today';
-      user_obj.stats[0].date = today;
+      user_obj.stats = {};
+      user_obj.stats.today = {};
+      user_obj.stats.today.date = today;
       
       var filtered_playlist = _.filter(playlists.items, function(item) {
         // Track only non-collaborative playlists from this user
@@ -285,21 +288,21 @@ module.exports = function(req, res, next) {
         track_count += item.tracks.total;
       });
 
-      user_obj.stats[0].playlist_count = filtered_playlist.length;
-      user_obj.stats[0].playlist_track_count = track_count;
+      user_obj.stats.today.playlist_count = filtered_playlist.length;
+      user_obj.stats.today.playlist_track_count = track_count;
 
       // Next: get user Library
       // we only need to return one track since the response contains
       // informations about how many tracks there are in the library
       return spotify.getMySavedTracks({ limit:1 });
     }).then(function(library) {
-      user_obj.stats[0].library_track_count = library.total;
+      user_obj.stats.today.library_track_count = library.total;
 
       // Next: get count and duration of tracks user listened to today
       return facebookMusic(user.fbid);
     }).then(function(listened_to) {
-      user_obj.stats[0].listening_count = listened_to.count;
-      user_obj.stats[0].listening_duration = listened_to.duration;
+      user_obj.stats.today.listening_count = listened_to.count;
+      user_obj.stats.today.listening_duration = listened_to.duration;
       return;
     }).then(function() {
 
@@ -311,15 +314,17 @@ module.exports = function(req, res, next) {
       if(!user_doc.stats) {
         return;
       }
-      
-      if(user_doc.stats[0] && user_doc.stats[0].date === user_obj.stats[0].date) {
+
+      if(user_doc.stats.today && (user_doc.stats.today.date - user_obj.stats.today.date) === 0) {
+        console.log('Docs today date did not change');
         // Doc's 'today' have the same date as today
         return;
       }
       else {
+        console.log('Today is not today anymore. Need to change this.');
         // We need to archive 'today' and set it as 'yesterday'
-        return changeTodayToYesterday(user.id, user_doc.stats[0]).then(function() {
-          user_obj.stats[1] = user_doc.stats[0];
+        return changeTodayToYesterday(user.id, user_doc.stats.today).then(function() {
+          user_obj.stats.yesterday = user_doc.stats.today;
         });
       }
     }).then(function() {
@@ -327,7 +332,8 @@ module.exports = function(req, res, next) {
       // AT THIS POINT WE HAVE THE CORRECT 'yesterday' IN THE DB.
       // WE CAN UPDATE 'today' NOW
       // 
-      return setToday(user.id, user_obj.stats[0]);
+      user_obj.stats.yesterday = user_doc.stats.yesterday;
+      return setToday(user.id, user_obj.stats.today);
     }).then(function() {
       //
       // AT THIS POINT WE HAVE THE CORRECT 'today' IN THE DB.
