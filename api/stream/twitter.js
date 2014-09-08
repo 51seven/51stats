@@ -36,5 +36,9 @@ module.exports = function(io) {
                 console.log(send);
             }   
         });
+        stream.on('error', function(err) {
+            // TODO: Maybe here should be some kind of error handling?
+            console.log(err);
+        });
     });
 };
