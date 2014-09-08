@@ -245,8 +245,8 @@ module.exports = function(req, res, next) {
     }).then(function(scrape_data) {
       user_obj.user = {};
       user_obj.user.name = scrape_data.name;
-
-      // TODO: missing user keys
+      user_obj.user.id = user.id;
+      // TODO: (Maybe) User Profile pic?
 
       var top_tracks = scrape_data.top_tracks;
       if(top_tracks.length === 0) return null;
@@ -257,14 +257,13 @@ module.exports = function(req, res, next) {
     }).then(function(top_tracks_data) {
       // Add top_position key to Spotify Object
       if(top_tracks_data !== null) {
-        // TODO: This does not work
+
         _.each(top_tracks_data.tracks, function(it, i) {
           delete it.available_markets;
           delete it.album.available_markets;
           return it;
         });
 
-        // TODO: Thin out spotify response object (eg. available_markets array)
         user_obj.top_tracks = top_tracks_data.tracks;
       }
 
